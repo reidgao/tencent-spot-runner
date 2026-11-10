@@ -1,0 +1,33 @@
+name: Stop a Tencent Cloud spot runner
+description: Destroy the machine the start action bought and remove its runner registration.
+inputs:
+  secret-id:
+    description: Tencent Cloud SecretId.
+    required: true
+  secret-key:
+    description: Tencent Cloud SecretKey.
+    required: true
+  github-token:
+    description: The same GitHub token the start action used.
+    required: true
+  instance-id:
+    description: The start action's instance-id output.
+    required: true
+  label:
+    description: The start action's label output.
+    required: true
+  region:
+    description: Tencent Cloud region.
+    default: ap-hongkong
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: node "$GITHUB_ACTION_PATH/../tencent-runner.mjs" stop
+      env:
+        TENCENT_SECRET_ID: ${{ inputs.secret-id }}
+        TENCENT_SECRET_KEY: ${{ inputs.secret-key }}
+        RUNNER_GITHUB_TOKEN: ${{ inputs.github-token }}
+        INSTANCE_ID: ${{ inputs.instance-id }}
+        RUNNER_LABEL: ${{ inputs.label }}
+        SPOT_REGION: ${{ inputs.region }}

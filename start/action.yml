@@ -1,0 +1,61 @@
+name: Start a Tencent Cloud spot runner
+description: Buy one spot CVM, register it as an ephemeral self-hosted runner for this repository, and wait until it is online.
+inputs:
+  secret-id:
+    description: Tencent Cloud SecretId of a CAM sub-user (see the README for the policy).
+    required: true
+  secret-key:
+    description: Tencent Cloud SecretKey of the same sub-user.
+    required: true
+  github-token:
+    description: Fine-grained GitHub token with Administration read and write on this repository.
+    required: true
+  sizes:
+    description: >-
+      JSON list of machine sizes to try, best first, such as
+      [{"cpu":32,"workers":20},{"cpu":16,"workers":10}]. Extra fields come back in the size output,
+      so put the worker counts you measured on each size there.
+    default: '[{"cpu":32},{"cpu":16}]'
+  max-cny-per-hour:
+    description: Highest spot price per hour, in CNY, the run may pay.
+    default: '5'
+  prepull-images:
+    description: Space-separated Docker images to pull at boot, such as the job's container image.
+    default: ''
+  region:
+    description: Tencent Cloud region.
+    default: ap-hongkong
+  disk-gb:
+    description: System disk size in GB.
+    default: '100'
+outputs:
+  ready:
+    description: '"true" once the runner is online. Gate the job that uses the machine on it.'
+    value: ${{ steps.spot.outputs.ready }}
+  label:
+    description: 'The runner label, for runs-on: [self-hosted, <label>].'
+    value: ${{ steps.spot.outputs.label }}
+  instance-id:
+    description: The machine to destroy with the stop action.
+    value: ${{ steps.spot.outputs.instance-id }}
+  size:
+    description: The chosen entry of sizes, as JSON; read it with fromJSON().
+    value: ${{ steps.spot.outputs.size }}
+  per-hour:
+    description: The machine's spot price per hour, in CNY.
+    value: ${{ steps.spot.outputs.per-hour }}
+runs:
+  using: composite
+  steps:
+    - id: spot
+      shell: bash
+      run: node "$GITHUB_ACTION_PATH/../tencent-runner.mjs" start
+      env:
+        TENCENT_SECRET_ID: ${{ inputs.secret-id }}
+        TENCENT_SECRET_KEY: ${{ inputs.secret-key }}
+        RUNNER_GITHUB_TOKEN: ${{ inputs.github-token }}
+        SPOT_SIZES: ${{ inputs.sizes }}
+        SPOT_MAX_CNY_PER_HOUR: ${{ inputs.max-cny-per-hour }}
+        SPOT_PREPULL_IMAGES: ${{ inputs.prepull-images }}
+        SPOT_REGION: ${{ inputs.region }}
+        SPOT_DISK_GB: ${{ inputs.disk-gb }}

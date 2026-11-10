@@ -1,0 +1,29 @@
+name: Sweep leftover Tencent Cloud spot runners
+description: Destroy every CI machine older than the maximum age. Run it on a schedule from one repository; it covers the machines of every repository that uses this tool.
+inputs:
+  secret-id:
+    description: Tencent Cloud SecretId.
+    required: true
+  secret-key:
+    description: Tencent Cloud SecretKey.
+    required: true
+  prefixes:
+    description: Space-separated machine-name prefixes to sweep.
+    default: ci-
+  max-age-minutes:
+    description: Destroy machines older than this.
+    default: '75'
+  region:
+    description: Tencent Cloud region.
+    default: ap-hongkong
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: node "$GITHUB_ACTION_PATH/../tencent-runner.mjs" sweep
+      env:
+        TENCENT_SECRET_ID: ${{ inputs.secret-id }}
+        TENCENT_SECRET_KEY: ${{ inputs.secret-key }}
+        SPOT_SWEEP_PREFIXES: ${{ inputs.prefixes }}
+        SPOT_MAX_AGE_MINUTES: ${{ inputs.max-age-minutes }}
+        SPOT_REGION: ${{ inputs.region }}
