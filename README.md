@@ -138,14 +138,24 @@ jobs:
       - run: npm ci && npx playwright test
 ```
 
-### 5. One sweep for everything
+### 5. Sweep on every run, and on a schedule
 
-Tencent Cloud refuses a scheduled destroy (`ActionTimer`) on spot instances, so a schedule is the backstop for a stop job that never ran. One repository is enough:
+Tencent Cloud refuses a scheduled destroy (`ActionTimer`) on spot instances, so a sweep is the backstop for a stop job that never ran. Add it to the stop job, after `stop`, so every run sweeps:
+
+```yaml
+      - if: ${{ always() }}
+        uses: reidgao/tencent-spot-runner/sweep@v1
+        with:
+          secret-id: ${{ secrets.TENCENT_SECRET_ID }}
+          secret-key: ${{ secrets.TENCENT_SECRET_KEY }}
+```
+
+A schedule alone is not enough: GitHub can start scheduled workflows hours late. Keep one schedule in one repository as a second layer, off the hour and half hour, where GitHub is busiest:
 
 ```yaml
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '17,47 * * * *'
   workflow_dispatch:
 
 jobs:
